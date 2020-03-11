@@ -77,14 +77,23 @@
     console.log(data);
     
     // 1. Post-process dataset
+    data = data.filter( d => d['event_type'] === 'GOAL' &&
+                             d['event_detail'] !== 'NA');
     
     
-    
+    data.forEach( d => {
+      // Easier if we have values start at 0
+      // You can also just use the scales to do it, which I've done for the notes for today
+      d['coords_x'] = Math.abs(d['coords_x']);
+      
+    });
+    console.log(data);
 
     // 2. Build some scales
-    // let xScale = d3.scaleLinear().domain([0,100]).range([0,400]);
-    // let yScale = d3.scaleLinear().domain([0,85]).range([0,340]);
-    // let ordScale = d3.scaleOrdinal(d3.schemeCategory10); 
+    let xScale = d3.scaleLinear().domain([0,100]).range([0,400]);
+    let yScale = d3.scaleLinear().domain([-42.5,42.5]).range([0,340]); 
+    // This version has the negative values, but since we use yScale in the generator, we don't have the issues w/neg numbers
+    let ordScale = d3.scaleOrdinal(d3.schemeCategory10); 
     
     
     // 2a. Show circles
@@ -101,12 +110,31 @@
     
     
     // 3. Make a contour generator for density
-    
+    let contourGen = d3.contourDensity()
+                       .x( d => xScale(d['coords_x']) )
+                       .y( d => yScale(d['coords_y']) )
+                       .size( [400, 340] )  // size of our viewport ((max-min for possible values of x,y))
+                       .thresholds( 5 );  // number of "levels" we want in our contour
     
     
     // 4. First, visualize all shots
+    let contours = contourGen(data);
+    console.log(contours); // Notice that this is a GeoJSON object
     
+    // ContourDensity gives each level a .value property for it's density level
+    //  A log scale may be more appropriate for the levels, but that's a longer discussion
+    let valueExtent = d3.extent(contours, d => d.value);
+    let colorScale = d3.scaleSequential(d3.interpolateBuGn).domain(valueExtent);
     
+    // Draw the contours just like any other geoJSON object
+    // No projection needed for geoPath because it's already working in the right pixel space
+    layer.selectAll("path.All").data(contours)
+         .join("path")
+         .attr("class", "All")
+         .attr("stroke", "black")
+         .attr("stroke-linejoin", "round")
+         .attr("fill", d => colorScale(d.value))
+         .attr("d", d3.geoPath() );
     
     
     // 5. Make a legend for all of the shot types
