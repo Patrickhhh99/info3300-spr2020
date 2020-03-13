@@ -1,0 +1,175 @@
+<html><head>
+<title>INFO 3300 - March 13</title>
+
+  <link href="https://fonts.googleapis.com/css?family=Lato:400,700|Raleway:400,700" rel="stylesheet">
+
+  <link rel="stylesheet" type="text/css" href="../css/normalize.css">
+  <link rel="stylesheet" type="text/css" href="../css/skeleton.css">
+  <link rel="stylesheet" type="text/css" href="../css/custom-style.css">
+
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.14.2/styles/default.min.css">
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.14.2/highlight.min.js"></script>
+  <script src="https://d3js.org/d3.v5.min.js"></script>
+  <script src="https://d3js.org/topojson.v2.min.js"></script>
+  <style>
+
+  </style>
+
+</head>
+<body>
+  <div class="container larger">
+  <h3>Prompt for March 13</h3>
+  <p>
+    The challenge for today is to visualize AS MANY VARIABLES AS POSSIBLE on one chart. Download this prompt and access the <a href="../datasets/fake_data.csv">toy dataset</a> I have provided.
+  </p>
+  <p>
+    We're each going to work on a visualization, trying to show as many variables as possible while maintaining clarity. If you have a computer, code it up. You can use the example marks and scales I've provided to help you out. If you take paper notes, feel free to sketch up your visualization of the data using the provided dataset.
+  </p>
+  <p>
+    Once you've finished something that you're proud of, send a screenshot or phone pic to jeffrz [at] cornell.edu with the subject line "VIS COMPETITION". Make sure to include rows of text that list every...<br/>
+    &nbsp;&nbsp;&nbsp;--data attribute-- : --visual channel used--
+  </p>
+
+
+  <h5>HTML for today:</h5>
+  <svg id="plot" height="500" width="500" style="margin-top:50px" >
+    
+
+  </svg>
+  
+  <!-- This block will be automatically filled with syntax-highlighted code from the script below -->
+  <h5>Code for today:</h5>
+  <pre>
+    <code id="display1" class="hljs javascript">
+    </code>
+  </pre>
+
+
+  <!--- Code for today's class --->
+  <script id="notes1">
+  
+  
+  const svg = d3.select("svg#plot");
+  const width = svg.attr("width");
+  const height = svg.attr("height");
+  const margin = {top: 10, right: 10, bottom: 10, left: 10};
+  const chartWidth = width - margin.left - margin.right;
+  const chartHeight = height - margin.top - margin.bottom;
+
+  // let annotations = svg.append("g").attr("id","annotations");
+  let chart = svg.append("g").attr("id","points")
+                 .attr("transform","translate("+margin.left+","+margin.top+")");
+                  
+                  
+                  
+
+  const requestData = async function() {
+    
+    let data = await d3.csv("../datasets/fake_data.csv", d3.autoType)
+    console.log(data);
+    
+    
+    
+    
+    // ------ EXAMPLE SCALES TO TRY ------
+    
+    // NUMERIC SCALES (for position, scaling, rotation, etc)
+    let numScale = d3.scaleLinear().domain([0,10]).range([0,100]);
+    let logScale = d3.scaleSymlog().domain([0,10]).range([0,100]); // symlog eliminates 0 issues
+    //   for a rotation transformation, you probably want a range of 0 to 360
+    //   for scale, 0 to 1 is shrinking (0.5 is 1/2 size), 1+ is increasing (2 is 2x size)
+  
+    // SIMPLE COLORS
+    let colorScale = d3.scaleSequential(d3.interpolateBuGn).domain([0,10]);
+    let ordScale = d3.scaleOrdinal(d3.schemeCategory10); 
+    
+    // FANCY COLORS   (HCL colors have hues 0-360, chromas 0-230, and luma 0-100
+    let lumScale = d3.scaleLinear().domain([0,10]).range([0,100]);
+    let chromaScale = d3.scaleLinear().domain([0,10]).range([0,230]);
+    let hueScale = d3.scaleLinear().domain([0,10]).range([0,360]);
+    // for these three, you could combine them to make a color by:
+    //   d => d3.hcl( hueScale(d.attr1), chromaScale(d.attr2), lumScale(d.attr3) )
+    // to be extra fancy, you could even use an ordinal scale to pick hues, e.g.
+    //   d => {  let ordHue = d3.hcl( ordScale(d.attr1) ).h; // get hue from ordScale
+    //           return d3.hcl( hueScale(d.attr1), chromaScale(d.attr2), lumScale(d.attr3) ); }
+
+    // (FOR SYMBOLS, SEE EXAMPLE MARKS)
+    
+    // (Don't forget, you can also split points up into multiple charts (small multiples),
+    //  regions of the same chart, or do something completely non-standard and new)
+    
+    
+    
+    // ------ EXAMPLE MARKS TO USE ------
+    //  circle
+    //   edit style and position here
+    chart.append("circle")
+         .attr("cx", 100)
+         .attr("cy", 100)
+         .attr("r", 12)
+         .attr("fill","steelblue");
+         
+    //   vertical line, rotated and scaled
+    //    edit the transform values to encode channels into the lines
+    chart.append("line")
+         .attr("x1",0)
+         .attr("x2",0)
+         .attr("y1",-5) // center around 0,0 and use translate()
+         .attr("y2",5)
+         .attr("stroke","goldenrod")
+         .attr("transform","translate("+100+","+100+") rotate("+45+") scale("+4+") ");
+         //  (remember that the rightmost transform is applied first!)
+         
+    //   d3 symbol
+    //       symbol types are:  ['symbolCircle', 'symbolCross', 'symbolDiamond',  
+    //                 'symbolSquare', 'symbolStar', 'symbolTriangle', 'symbolWye'];
+    //       you can use a scaleOrdinal to map symbols to categorical/ordinal values
+    //        just as we have done for category colors before
+    //       the trick is to use d3.symbol() to get a generator and then call
+    //        .type( symbolTypeString ) on the generator to get D for a path
+    let symbolGen = d3.symbol()
+    let symbolScale = d3.scaleOrdinal(d3.symbols)  // data => symbol type strings
+    chart.append("path")
+         .attr("d", symbolGen( symbolScale("new value") ) )
+         .attr("transform","translate("+50+","+50+")");
+    chart.append("path")
+         .attr("d", symbolGen.type( symbolScale("another value") ) )
+         .attr("transform","translate("+60+","+60+")");
+    chart.append("path")
+         .attr("d", symbolGen.type( symbolScale("yet another value") ) )
+         .attr("transform","translate("+70+","+70+")");
+    
+    
+    
+      
+
+    
+  }
+  requestData();
+  
+  
+  
+
+
+
+
+  </script>
+
+
+
+
+
+
+
+
+  <!--- calls the highlight library to fill the <pre> tag with code --->
+  <script>
+  document.getElementById("display1").innerText = document.getElementById("notes1").innerText;
+  hljs.initHighlightingOnLoad();
+  </script>
+
+
+
+  </div>
+</body>
+</html>
