@@ -27,8 +27,18 @@ h5 {
   margin-bottom: 0
 }
 .fixed-cell {
-  width: 150px;
+  max-width: 150px;
+}
+.online .fixed-cell {
+  max-width: 120px;
 }
 .schedule tr td:first-child {
   font-weight: bold;
+}
+.online .week-label td {
+  font-weight: bold;
+}
+.online .week-label td:first-child {
+  min-width: 80px;
+  padding-left:20px;
 }

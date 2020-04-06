@@ -18,35 +18,28 @@
 </head>
 <body>
   <div class="container larger">
-  <h3>Prompt for March 13</h3>
+  <h3>Visual Channels Challenge</h3>
   <p>
-    The challenge for today is to visualize AS MANY VARIABLES AS POSSIBLE on one chart. Download this prompt and access the <a href="../datasets/fake_data.csv">toy dataset</a> I have provided.
+    The challenge for this week is to visualize AS MANY VARIABLES AS POSSIBLE on one chart. You will visualize the <a href="../datasets/fake_data.csv">toy dataset</a> I have provided. 
   </p>
   <p>
-    We're each going to work on a visualization, trying to show as many variables as possible while maintaining clarity. If you have a computer, code it up. You can use the example marks and scales I've provided to help you out. If you take paper notes, feel free to sketch up your visualization of the data using the provided dataset.
+    Using your own creativity, try to show as many variables as possible from the dataset while maintaining clarity. You can employ the example marks and scales I've provided below to get started.
   </p>
   <p>
-    Once you've finished something that you're proud of, send a screenshot or phone pic to jeffrz [at] cornell.edu with the subject line "VIS COMPETITION". Make sure to include rows of text that list every...<br/>
-    &nbsp;&nbsp;&nbsp;--data attribute-- : --visual channel used--
+    In order to receive extra credit, you must visualize AT LEAST 5 different variables in one chart. Submit your answer to CMS in the form of a .zip file containing your own HTML and a copy of the dataset. Add a P tag listing your visual channels below your chart so that the grader can see that you've used at least 5. Submissions will be graded for completeness rather than quality, and the "best" ones will be highlighted in class.
+  </p>
+  <p>
+    You must turn in your final version before 11:59PM on Friday, April 10 in order to receive credit.
   </p>
 
 
-  <h5>HTML for today:</h5>
+  <h5>Example HTML:</h5>
   <svg id="plot" height="500" width="500" style="margin-top:50px" >
     
 
   </svg>
-  
-  <!-- This block will be automatically filled with syntax-highlighted code from the script below -->
-  <h5>Code for today:</h5>
-  <pre>
-    <code id="display1" class="hljs javascript">
-    </code>
-  </pre>
 
-
-  <!--- Code for today's class --->
-  <script id="notes1">
+  <script>
   
   
   const svg = d3.select("svg#plot");
@@ -65,6 +58,7 @@
 
   const requestData = async function() {
     
+    // Make sure to adjust this if you move the dataset to a new location
     let data = await d3.csv("../datasets/fake_data.csv", d3.autoType)
     console.log(data);
     
@@ -150,23 +144,8 @@
   
   
 
-
-
-
   </script>
 
-
-
-
-
-
-
-
-  <!--- calls the highlight library to fill the <pre> tag with code --->
-  <script>
-  document.getElementById("display1").innerText = document.getElementById("notes1").innerText;
-  hljs.initHighlightingOnLoad();
-  </script>
 
 
 
