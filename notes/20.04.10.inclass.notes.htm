@@ -1,5 +1,5 @@
 <html><head>
-<title>INFO 3300 - April 8</title>
+<title>INFO 3300 - April 10</title>
 
   <link href="https://fonts.googleapis.com/css?family=Lato:400,700|Raleway:400,700" rel="stylesheet">
 
@@ -32,6 +32,17 @@
   <svg id="all-passengers" height="500" width="500" style="background: #sff; margin-top:50px" >
   </svg>
   <div>
+    
+    <div id="x-container">
+      <span>X axis:</span>
+      <select id="x-select"> </select>
+    </div>
+    
+    <div id="y-container">
+      <span>Y axis:</span>
+      <select id="y-select"> </select>
+    </div>
+    
   </div>
 
 
@@ -62,19 +73,19 @@
     const ageExtent = d3.extent(passengers, d=>d.age);
     
     const XageScale = d3.scaleLinear().domain(ageExtent).range([padding,chartWidth-padding]);
-    const XclassScale = d3.scalePoint().domain(["first","second","third"]).range([padding,chartWidth-padding]);
-    const XsexScale = d3.scalePoint().domain(["male","female"]).range([padding,chartWidth-padding]);
-    const XmortalityScale = d3.scalePoint().domain(["survived","died"]).range([padding,chartWidth-padding]);
+    const XclassScale = d3.scalePoint().domain(["first","second","third"]).range([padding,chartWidth-padding]).padding(0.5);
+    const XsexScale = d3.scalePoint().domain(["male","female"]).range([padding,chartWidth-padding]).padding(0.5);
+    const XmortalityScale = d3.scalePoint().domain(["survived","died"]).range([padding,chartWidth-padding]).padding(0.5);
     
     const YageScale = d3.scaleLinear().domain(ageExtent).range([chartHeight-padding,padding]);
-    const YclassScale = d3.scalePoint().domain(["first","second","third"]).range([chartHeight-padding,padding]);
-    const YsexScale = d3.scalePoint().domain(["male","female"]).range([chartHeight-padding,padding]);
-    const YmortalityScale = d3.scalePoint().domain(["survived","died"]).range([chartHeight-padding,padding]);
+    const YclassScale = d3.scalePoint().domain(["first","second","third"]).range([chartHeight-padding,padding]).padding(0.5);
+    const YsexScale = d3.scalePoint().domain(["male","female"]).range([chartHeight-padding,padding]).padding(0.5);
+    const YmortalityScale = d3.scalePoint().domain(["survived","died"]).range([chartHeight-padding,padding]).padding(0.5);
     
     const mortalityColorScale = d3.scaleOrdinal().domain(["survived","died"]).range(["#259dc3","#c61530"]);
 
 
-    // Start off with a simple version
+    // Start off with a 2d version of the 08-Apr simulation
     // Position
     passengers.forEach( d => {
       d.x = d3.randomUniform(10,chartWidth-10)();
@@ -109,11 +120,12 @@
     
     }
     
+    // We assign the <g> tags for axes to variables so that we can update labels later
     let xAxis = d3.select("#all-passengers")
                   .append("g").attr("class","x-axis")
                   .attr("transform","translate("+(0)+","+(chartHeight-padding/2.0)+")")
-        
     xAxis.call( d3.axisBottom(XageScale) );
+        
         
     let yAxis = d3.select("#all-passengers")
                   .append("g").attr("class","y-axis")
@@ -121,12 +133,80 @@
     yAxis.call( d3.axisLeft(YageScale) );
     
     
-    console.log(passengers)
+    // NEW CONTENT:
     
+    // We added some <select> elements to the HTML at the top of the file
     
+    // <select> dropdowns only allow us to set strings as values (e.g. "age", "class") so we can't make use
+    //  of fancy data structures or stored values in the dropdowns
+    // Instead, you have to create data structures to take what the dropdown returns and look up the objects
+    //  or information you need to have -- in our case we need the scales in order to update axes and forces
+    // So these dictionaries take in a value from the <select> and output a scale object
+    const xScales = {
+      'age': XageScale,
+      'class': XclassScale,
+      'sex': XsexScale,
+      'mortality': XmortalityScale
+    };
+    const yScales = {
+      'age': YageScale,
+      'class': YclassScale,
+      'sex': YsexScale,
+      'mortality': YmortalityScale
+    };
     
+    // Populate the <select> dropdowns with options
+    var xDropdown = d3.select("#x-select");
+    var yDropdown = d3.select("#y-select");
+    d3.keys(xScales).forEach( d => {  // d3 has lots of nice helper functions for arrays/dicts
+      
+      xDropdown.append("option").text(d).attr("value", d);  //"value" is where you set the string that the <select> returns
+      yDropdown.append("option").text(d).attr("value", d);
+      
+    });
     
+    // Handle when a user selects a new option
+    xDropdown.on("change", updateX);
     
+    function updateX() {
+    
+      // Figure out which option they chose and recover the scale
+      let attribute = d3.select(this).property("value");
+      console.log(attribute);
+      let scale = xScales[ attribute ];
+      
+      // Update Axis labels
+      xAxis.html(null); // shortcut for emptying out everything inside of an HTML entity
+      xAxis.call( d3.axisBottom(scale) );
+      
+      // Update Simulation
+      passengerSimulation.force("xpos")   // you can call .force(forcename) to get a force back from the sim
+                         .x( d => scale( d[attribute] ) );
+      passengerSimulation.alpha(1);
+      passengerSimulation.restart();
+      
+    }
+    
+    yDropdown.on("change", updateY);
+    
+    function updateY() {
+      
+      // Figure out which option they chose and recover the scale
+      let attribute = d3.select(this).property("value");
+      console.log(attribute);
+      let scale = yScales[ attribute ];
+      
+      // Update Axis labels
+      yAxis.html(null); // shortcut for emptying out everything inside of an HTML entity
+      yAxis.call( d3.axisLeft(scale) );
+      
+      // Update Simulation
+      passengerSimulation.force("ypos")   // you can call .force(forcename) to get a force back from the sim
+                         .y( d => scale( d[attribute] ) );
+      passengerSimulation.alpha(1);
+      passengerSimulation.restart();
+      
+    }
     
     
     
