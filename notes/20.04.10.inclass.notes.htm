@@ -1,0 +1,157 @@
+<html><head>
+<title>INFO 3300 - April 8</title>
+
+  <link href="https://fonts.googleapis.com/css?family=Lato:400,700|Raleway:400,700" rel="stylesheet">
+
+  <link rel="stylesheet" type="text/css" href="../css/normalize.css">
+  <link rel="stylesheet" type="text/css" href="../css/skeleton.css">
+  <link rel="stylesheet" type="text/css" href="../css/custom-style.css">
+
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.14.2/styles/default.min.css">
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.14.2/highlight.min.js"></script>
+  <script src="https://d3js.org/d3.v5.min.js"></script>
+  <style>
+  
+  text.axis {
+    text-anchor: end;
+    font-variant: all-small-caps;
+  }
+
+
+  </style>
+</head>
+
+<body>
+  <div class="container larger">
+  <h3>In-class activities for April 10</h3>
+  <p>Check out the documentation for <a href="https://github.com/d3/d3-force">d3.force</a> and the subsection for available <a href="https://github.com/d3/d3-force#forces">forces</a></p>
+  <p>Let's start by critiquing this example: <a href="https://graphics.straitstimes.com/STI/STIMEDIA/Interactives/2018/04/marvel-cinematic-universe-whos-who-interactive/index.html">Marvel Character Map</a> (thanks Theresa!)</p>
+
+  <h5>HTML for today:</h5>
+
+  <svg id="all-passengers" height="500" width="500" style="background: #sff; margin-top:50px" >
+  </svg>
+  <div>
+  </div>
+
+
+
+  <h5>Code for today:</h5>
+  <pre>
+    <code id="display1" class="hljs javascript">
+      <!--- autofilled --->
+    </code>
+  </pre>
+
+
+  <script id="notes1">
+
+  const requestData = async () => {
+
+    // Dataset of titanic survivors from Feb. 11 lecture
+    const passengers = await d3.json("../datasets/titanic.json");
+    
+    // Layers for drawing
+    let chartLayer = d3.select("#all-passengers").append("g");
+    let chartWidth = d3.select("#all-passengers").attr("width");
+    let chartHeight = d3.select("#all-passengers").attr("height");
+    let padding = 50;
+    
+    // Build some scales
+    //  (you'd probably want a for loop in a real case)
+    const ageExtent = d3.extent(passengers, d=>d.age);
+    
+    const XageScale = d3.scaleLinear().domain(ageExtent).range([padding,chartWidth-padding]);
+    const XclassScale = d3.scalePoint().domain(["first","second","third"]).range([padding,chartWidth-padding]);
+    const XsexScale = d3.scalePoint().domain(["male","female"]).range([padding,chartWidth-padding]);
+    const XmortalityScale = d3.scalePoint().domain(["survived","died"]).range([padding,chartWidth-padding]);
+    
+    const YageScale = d3.scaleLinear().domain(ageExtent).range([chartHeight-padding,padding]);
+    const YclassScale = d3.scalePoint().domain(["first","second","third"]).range([chartHeight-padding,padding]);
+    const YsexScale = d3.scalePoint().domain(["male","female"]).range([chartHeight-padding,padding]);
+    const YmortalityScale = d3.scalePoint().domain(["survived","died"]).range([chartHeight-padding,padding]);
+    
+    const mortalityColorScale = d3.scaleOrdinal().domain(["survived","died"]).range(["#259dc3","#c61530"]);
+
+
+    // Start off with a simple version
+    // Position
+    passengers.forEach( d => {
+      d.x = d3.randomUniform(10,chartWidth-10)();
+      d.y = d3.randomUniform(10,chartHeight-10)();
+    });
+    
+    // Draw
+    chartLayer.selectAll("circle").data(passengers)
+            .join("circle")
+            .attr("r", 1.5) // we reduced this compared to d3.forceCollide so that points appear more spaced out
+            .attr("cx", d => d.x) // initially set random positions here, but the simulation doesn't use cx and cy from circles
+            .attr("cy", d => d.y) //  so we had to instead add the forEach above and use the x and y positions
+            .attr("fill", d => mortalityColorScale(d.mortality));
+
+    var passengerSimulation = d3.forceSimulation()
+                                .nodes(passengers)
+                                 .force("collision", d3.forceCollide()
+                                                       .radius(2)
+                                                       .iterations(2) )
+                                 .force("xpos", d3.forceX()
+                                                  .x( d => XageScale(d.age) )
+                                                  .strength( 0.05 ) )
+                                 .force("ypos", d3.forceY()
+                                                  .y( d => YageScale(d.age) )
+                                                  .strength( 0.05 ) )
+                                 
+                                .on("tick", updateAllPassengerPositions);
+
+    function updateAllPassengerPositions() {
+      // use the x and y values that the simulation provides to move the circles
+      chartLayer.selectAll("circle").attr("cx", d => d.x).attr("cy", d => d.y);
+    
+    }
+    
+    let xAxis = d3.select("#all-passengers")
+                  .append("g").attr("class","x-axis")
+                  .attr("transform","translate("+(0)+","+(chartHeight-padding/2.0)+")")
+        
+    xAxis.call( d3.axisBottom(XageScale) );
+        
+    let yAxis = d3.select("#all-passengers")
+                  .append("g").attr("class","y-axis")
+                  .attr("transform","translate("+(padding/2.0)+","+(0)+")")
+    yAxis.call( d3.axisLeft(YageScale) );
+    
+    
+    console.log(passengers)
+    
+    
+    
+    
+    
+    
+    
+    
+
+  };
+
+  requestData();
+
+
+
+  </script>
+
+
+
+
+
+
+
+
+  <!--- calls the highlight library to fill the <pre> tag with code --->
+  <script>
+  document.getElementById("display1").innerText = document.getElementById("notes1").innerText;
+  hljs.initHighlightingOnLoad();
+  </script>
+
+  </div>
+</body>
+</html>
