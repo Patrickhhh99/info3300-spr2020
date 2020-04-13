@@ -1,0 +1,46 @@
+<html><head>
+<title>INFO 3300 - Sankey Challenge</title>
+
+  <link href="https://fonts.googleapis.com/css?family=Lato:400,700|Raleway:400,700" rel="stylesheet">
+
+  <link rel="stylesheet" type="text/css" href="../css/normalize.css">
+  <link rel="stylesheet" type="text/css" href="../css/skeleton.css">
+  <link rel="stylesheet" type="text/css" href="../css/custom-style.css">
+
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.14.2/styles/default.min.css">
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.14.2/highlight.min.js"></script>
+  <script src="https://d3js.org/d3.v5.min.js"></script>
+  <script src="https://d3js.org/topojson.v2.min.js"></script>
+  <style>
+
+  </style>
+
+</head>
+<body>
+  <div class="container larger">
+  <h3>Sankey Challenge</h3>
+  <p>
+    The challenge for this week is to create a Sankey diagram of Titanic shipwreck victims and survivors. I've constructed a directed acyclic graph of counts, located <a href="../datasets/titanic-sankey.json">here</a>.
+  </p>
+  <p>
+    The dataset contains nodes for age quartiles, cabin class, sex, and mortality. Your final Sankey diagram should using the following order: Age -> Mortality -> Cabin Class -> Sex
+  </p>
+  <p>
+    To construct your visualization, you will need to import the <a>d3-sankey library</a>. One easy way to do this is by adding this tag to your HTML header: 
+  &lt;script src=&quot;https://unpkg.com/d3-sankey@0&quot;&gt;&lt;/script&gt;
+  <p>
+    This is an implementation challenge, not a design one. While it would be good practice to make an appealing and effective design, we will accept submissions that successfully construct a discernable chart. Here is one example that successfully displays a chart but does not necessarily practice the best design principles:<br/>
+     <img src="snky.png" width=500/>
+  <p>
+    Submit your answer to CMS in the form of a .zip file containing your own HTML and a copy of the dataset. Submissions will be graded for completeness rather than quality, and the "best" ones will be highlighted in class.
+  </p>
+  <p>
+    You must turn in your final version before 11:59PM on Friday, April 17 in order to receive credit.
+  </p>
+
+
+
+
+  </div>
+</body>
+</html>
