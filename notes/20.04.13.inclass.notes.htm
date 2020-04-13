@@ -1,0 +1,174 @@
+<html><head>
+<title>INFO 3300 - April 13</title>
+
+  <link href="https://fonts.googleapis.com/css?family=Lato:400,700|Raleway:400,700" rel="stylesheet">
+
+  <link rel="stylesheet" type="text/css" href="../css/normalize.css">
+  <link rel="stylesheet" type="text/css" href="../css/skeleton.css">
+  <link rel="stylesheet" type="text/css" href="../css/custom-style.css">
+
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.14.2/styles/default.min.css">
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.14.2/highlight.min.js"></script>
+  <script src="https://d3js.org/d3.v5.min.js"></script>
+  <style>
+
+  line.dashed {
+    stroke: #aaa;
+    stroke-width: 1px;
+    stroke-dasharray: 2;
+  }
+  text.axis {
+    text-anchor: end;
+    font-variant: all-small-caps;
+  }
+
+
+  </style>
+</head>
+
+<body>
+  <div class="container larger">
+  <h3>In-class activities for April 13</h3>
+  <p>Check out the documentation for <a href="https://github.com/d3/d3-force">d3.force</a> and the subsection for available <a href="https://github.com/d3/d3-force#forces">forces</a>. We'll be looking at some more forces in detail today.</p>
+  <p>Let's start by critiquing this example: <a href="https://res.cloudinary.com/yumyoshojin/image/upload/v1/pdf/made-in-france.pdf">Made in France</a></p>
+
+  <h5>HTML for today:</h5>
+  
+  <svg id="graph" height="800" width="800" style="background: #sff; margin-top:50px" >
+  </svg>
+
+
+
+  <h5>Code for today:</h5>
+  <pre>
+    <code id="display1" class="hljs javascript">
+      <!--- autofilled --->
+    </code>
+  </pre>
+
+
+  <script id="notes1">
+  
+  // Layer for drawing
+  const layer = d3.select("#graph").append("g");
+  const width = d3.select("#graph").attr("width");
+  const height = d3.select("#graph").attr("height");
+  const colorScale = d3.scaleOrdinal(d3.schemeSet1);
+
+  // Circle indicators for the radial force-directed graph
+  for (let i=0; i<=4; i++) {
+    layer.append("circle").attr("cx",width/2).attr("cy",height/2).attr("fill","none").attr("stroke","#f5f5f5").attr("r",i*80).attr("stroke-width",40);
+  }
+  
+  const requestData = async () => {
+
+    // Load dataset of CIS classes (note, I made this by hand so there probably will be tons of errors)
+    const classes = await d3.json("../datasets/classes.json");
+    console.log(classes)
+
+    //Assemble data structures for a graph
+    var nodes = classes;
+    var links = [];
+
+    // Oftentimes the data will not come in a clean, ready-to-use format...
+    
+    
+    
+    
+
+    
+
+
+
+    // Build a simulation for the graph
+    
+
+
+    // Run the simulation for a few ticks to "fast forward" it
+    ///for (let i=0; i<50; i++) { sim.tick(); }
+
+    
+
+    // Update the chart for a new tick of the simulation
+    // function render() {
+    // 
+    //   // Edges
+    //   let lines = layer.selectAll("line.link").data(links)
+    //         .join( enter => {enter.append("line")
+    //                             .attr("class","link")
+    //                             .attr("stroke","#333")} )
+    //        .attr("x1", d => d.source.x).attr("x2", d => d.target.x)   
+    //        .attr("y1", d => d.source.y).attr("y2", d => d.target.y);
+    // 
+    //   // Nodes
+    //   let circles = layer.selectAll("circle.node").data(nodes)
+    //           .join( enter => {enter.append("circle")
+    //                                .attr("class","node")
+    //                                .attr("fill", d => colorScale(d.prefix))
+    //                                .attr("stroke", "#333")
+    //                                .attr("r", 6)
+    //                                .attr("cx", 0)
+    //                                .attr("cy", 0)
+    //                                .call( d3.drag().on("start",dragstart).on("drag",dragging).on("end",dragend) )}  )
+    //          .attr("transform", d => "translate("+d.x+","+d.y+")");
+    // 
+    // }
+    // End render loop
+
+  
+    // var label = layer.append("text").attr("id","label");
+    // function dragstart(d) {
+    // 
+    //   if (!d3.event.active) {
+    //     label.text(d.course);
+    //     sim.alphaTarget(0.08).restart();
+    //   }
+    //   d.fx = d3.event.x;
+    //   d.fy = d3.event.y;
+    // 
+    //   label.attr("x",d3.event.x).attr("y",d3.event.y);
+    // }
+    // function dragging(d) {
+    // 
+    //   d.fx = d3.event.x;
+    //   d.fy = d3.event.y;
+    //   label.attr("x",d3.event.x).attr("y",d3.event.y);
+    // 
+    // }
+    // function dragend(d) {
+    // 
+    //   if (!d3.event.active) {
+    //     sim.alphaTarget(0);
+    //     label.text("");
+    //   }
+    //   d.fx = null;
+    //   d.fy = null;
+    // 
+    // }
+
+  };
+
+  requestData();
+
+  
+  
+
+
+  </script>
+
+
+
+
+
+
+
+
+  <!--- calls the highlight library to fill the <pre> tag with code --->
+  <script>
+  document.getElementById("display1").innerText = document.getElementById("notes1").innerText;
+  hljs.initHighlightingOnLoad();
+  </script>
+
+  </div>
+</body>
+</html>
