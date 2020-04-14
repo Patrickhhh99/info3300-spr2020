@@ -1,0 +1,205 @@
+<html><head>
+<title>INFO 3300 - April 15</title>
+
+  <link href="https://fonts.googleapis.com/css?family=Lato:400,700|Raleway:400,700" rel="stylesheet">
+
+  <link rel="stylesheet" type="text/css" href="../css/normalize.css">
+  <link rel="stylesheet" type="text/css" href="../css/skeleton.css">
+  <link rel="stylesheet" type="text/css" href="../css/custom-style.css">
+
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.14.2/styles/default.min.css">
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.14.2/highlight.min.js"></script>
+  <script src="https://d3js.org/d3.v5.min.js"></script>
+  <script src="https://d3js.org/d3-array.v2.min.js"></script>
+  <style>
+
+  line.dashed {
+    stroke: #aaa;
+    stroke-width: 1px;
+    stroke-dasharray: 2;
+  }
+  text.axis {
+    text-anchor: end;
+    font-variant: all-small-caps;
+  }
+
+
+  </style>
+</head>
+
+<body>
+  <div class="container larger">
+  <h3>Notes for April 15</h3>
+  <p>Today we'll work with graph data once again. However, unlike in hierarchies where the emphasis is placed on the nodes and where they sit in a structure, we will instead be placing emphasis on the edges between nodes. For example, while it might be useful to compare GDP of regions using a treemap, you need a different visual metaphor if you want to show the trade *between* nations. Often, more structured visualizations work for this case, and today we'll try out a chord diagram. In the optional lecture we'll look at how to expand this approach to hiearchies and edge bundled arcs.</p>
+  <p><a href="https://observablehq.com/@d3/chord-diagram">Here</a> is an Observable example of a chord diagram. <a href="http://bl.ocks.org/nbremer/94db779237655907b907">This one</a> attempts to add some interactivity.</p>
+  <p>The <a href="https://github.com/d3/d3-chord">d3 chord library</a> has lots of helpful functions. We'll also be making use of the arc generator from <a href="https://github.com/d3/d3-shape">d3-shape</a>.</p>
+  
+  
+  
+  
+  
+    
+  <h5>HTML for today:</h5>
+
+  <svg id="chord" height="600" width="600" style="background: #fff; margin-top:50px" >
+  </svg>
+  
+
+
+  <h5>Code for today:</h5>
+  <pre>
+    <code id="display1" class="hljs javascript">
+      <!--- autofilled --->
+    </code>
+  </pre>
+
+
+  <script id="notes1">
+  // See bottom of file for force-directed chart
+  
+  // Layer for drawing
+  const width = d3.select("#chord").attr("width");
+  const height = d3.select("#chord").attr("height");
+  const chordChart = d3.select("#chord").append("g");
+  
+  
+  const drawChord = async () => {
+
+    // Load LotR dataset
+    //const lotr = await d3.json("../datasets/lotr-cooccur.json");  // Full dataset
+    const lotr = await d3.json("../datasets/lotr-cooccur.fellowship.json"); // Fellowship dataset
+    console.log(lotr);
+    
+    let nodes = lotr.nodes;
+    let links = lotr.links;
+    
+    // The d3.chord function needs a 2d matrix of flow in order to function
+    // This doesn't seem like the best design choice, but you'll often see matrix representations of graphs
+    // We'll create one from our list of edges
+    
+    // Make zeroed-out matrix that's a square of nodes.length size
+    let matrix = [];
+    for (let i=0; i<nodes.length; i++) { 
+        let row = [];
+        for (let j=0; j<nodes.length; j++) { row.push(0); }
+        matrix.push(row);
+    }
+    console.log(matrix);
+    
+    links.forEach( d => {
+      
+      // Add in if statement when things explode
+      if (d.cooccurrence > 5) {
+      
+        // Thankfully, the links already use node index for their source and target
+        // As edges are bidirectional, we'll fill in two cells of the matrix for each one
+        matrix[d.source][d.target] = d.cooccurrence;
+        matrix[d.target][d.source] = d.cooccurrence;
+        
+      }
+    });
+    // Anything left unfilled remains at 0, which will draw no ribbons
+    console.log(matrix);
+    
+    let radius = 220;
+    
+    // Make a chord diagram generator
+    let chordGen = d3.chord()
+                    .padAngle(.04)
+                    .sortSubgroups(d3.descending)
+                    .sortChords(d3.descending)
+    // Make an outer arc generator
+    let arcGen = d3.arc()
+                    .innerRadius(radius)
+                    .outerRadius(radius + 20)
+    // Make a ribbon generator
+    let ribbonGen = d3.ribbon()
+                      .radius(radius)
+    
+    // Feed in the matrix
+    let chords = chordGen(matrix);
+    console.log(chords);
+    
+    // One note - the chord diagram is going to draw at 0,0
+    // The easiest solution is to translate the layer
+    chordChart.attr("transform","translate("+width/2+","+height/2+")");
+    
+    // Make the outer ring
+    let colorScale = d3.scaleOrdinal(d3.schemeCategory10);
+
+    let ring = chordChart.append("g")
+                        .selectAll("g")
+                        .data(chords.groups)
+                        .join("g");
+    
+    ring.append("path")
+      .attr("fill", d => colorScale( nodes[ d.index ].name ))
+      .attr("stroke", d => colorScale( nodes[ d.index ].name ))
+      .attr("d", arcGen);
+
+    let ribbons = chordChart.append("g")
+                      .selectAll("path")
+                      .data(chords)
+                      .join("path")
+                        .attr("fill-opacity", 0.5)
+                        .attr("stroke", "none"))
+                        .attr("fill", d => colorScale( nodes[ d.source.index ].name ))
+                        .attr("d", ribbonGen);
+    
+    
+    // Was pretty scary at the start with the full dataset
+    //  Filter down the edges a bit, then we removed nodes by switching to fellowship file
+    
+    
+    // Add in the labels
+    // We want them to go around the circle, so we have to be a bit clever here
+    //  for clarity, we'll make a new property for the transform - this can all be done in one line during an append
+    // Remember that transforms work from the end back, so we want to move it out and then rotate it around the circle
+    // If we have to flip the text, we want to do it first
+    chords.groups.forEach( d => {
+      let transform = '';
+      // find midpoint, convert to degrees
+      let midpoint = (d.startAngle + d.endAngle) / 2;
+      let rotation = ( midpoint ) * ( 180 / Math.PI ) - 90;
+      transform = transform + "rotate("+ rotation +") ";
+      transform = transform + "translate("+ (radius + 25)+",0) ";
+      if (rotation > 90) {
+        transform = transform + "rotate(180)";
+        // Notice text anchor issue
+        d.anchor = "end";
+      }
+      d.trans = transform;
+    });
+    
+    ring.append("text")
+      .attr("transform", d => d.trans)
+      .text(d => nodes[ d.index ].name )
+      .attr("text-anchor", d => d.anchor);
+    
+  }
+  drawChord();
+
+
+  
+
+
+
+  </script>
+
+
+
+
+
+
+
+
+  <!--- calls the highlight library to fill the <pre> tag with code --->
+  <script>
+  document.getElementById("display1").innerText = document.getElementById("notes1").innerText;
+  hljs.initHighlightingOnLoad();
+  </script>
+
+
+  </div>
+</body>
+</html>

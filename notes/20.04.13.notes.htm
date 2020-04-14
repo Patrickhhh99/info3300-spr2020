@@ -67,14 +67,79 @@
   const drawTreemap = async () => {
 
     // Load country dataset
+    // Load country dataset
     const countryDat = await d3.json("../datasets/countries-2016.json");
     console.log(countryDat);
     
+    // Aggregate up through the data to collect by subregion, region etc.
+    // d3.rollup does one, d3.rollups accepts many
+    //  d3.rollups( DATASET,  AGGREGATION FUNCTION,  ROLLUP-FIELD-GETTERs... )
+    let rolled = d3.rollups(countryDat, 
+                                   grp => d3.sum(grp, d => d.population),
+                                   d => d.region,
+                                   d => d.subregion,
+                                   d => d.name )
+    console.log(rolled);
     
+    // Make a root node to hold the rolled up regions
+    let root = ['World', rolled]
     
+    console.log(root);
     
+    // Take the rolled up data and build a hierarchy
+    //   d3.hierarchy( ROOT-NODE, GETTER FOR CHILDREN )
+    //     .sum ( GETTER FOR LEAF VALUES )
+    //     .sort ( SORT COMPARATOR )   (good for ordering treemaps etc)
+    // Returns a new special data structure's root node
+    // Note: In this code we know that "d" is always going to be a 2-element array because d3.rollups formats that way
+    //       So instead of using "d => d." style getter functions, we use [nm, value] directly
+    //       Since "rolled" was just a list of regions, we created a new ROOT-NODE right in the parameters
+    // If you use a dictionary like the sample .py, you wouldn't want [nm, value] => value as your child getter
+    //  ...instead, you might want something like   d => d.children
+    root = d3.hierarchy(root, ([nm, value]) => value)
+             .sum( ([name, population]) => population ) 
+                   // .sum() is only run on _leaf nodes_, so we know that the second element here 
+                   //  is a raw population number instead of a list of children
+             .sort(function(a, b) { return b.height - a.height || b.value - a.value; });
     
+    console.log(root); // Notice how the .sum() has now filled in populations for the higher levels of the tree
     
+    // Treemap generator - mutates the hierarcy
+    var treemap = d3.treemap()
+      .tile(d3.treemapResquarify)  // Try experimenting with different tiling methods
+      .size([treemapWidth, treemapHeight])
+      .round(true)
+      .paddingInner(1);
+    
+    // Apply the treemap
+    treemap(root); // The treemap actually changed the data - it didn't make a new dataset
+    console.log(root);
+    
+    // Though we'll be showing everything, the only stuff we need to draw are the bottom-most leaf nodes
+    //  Because we have access to .parent and all of the other d3.hierarchy properties, we can navigate the tree
+    console.log(root.leaves())
+    
+    // Color scale
+    //  Using a cool trick by Ashish Singh!
+    let colorScale = d3.scaleOrdinal(d3.schemeCategory10.map( color => d3.interpolateRgb(color, "#fff")(0.4) ));
+    
+    // Try something simple - group containing a rect and a label
+    //  (there will usability issues with the labels here - this is a common treemap problem)
+    treemapChart.selectAll('g').data( root.leaves() )
+           .join('g')
+           .append('rect')
+           .attr('fill',  d => colorScale( d.parent.parent.data[0] ) )
+           .attr('x', d => d.x0)
+           .attr('y', d => d.y0)
+           .attr('width', d => d.x1 - d.x0 )
+           .attr('height', d => d.y1 - d.y0 )
+           
+    treemapChart.selectAll('g')
+           .append('text')
+           .attr('x', d => d.x0+4)
+           .attr('y', d => d.y0+14)
+           .text( d => d.data[0] )
+           
     
     
     
@@ -101,12 +166,12 @@
     var popColor = val => d3.interpolateMagma( d3.scaleSymlog().domain(popExtent).range([0,1])(val) )
   
   
-    var sim = d3.forceSimulation()
-                .nodes(nodes)
-                .force("links", d3.forceLink().links(links).distance(8) )
-                .force("repulse", d3.forceManyBody().strength(-15) )
-                .force("center", d3.forceCenter(networkWidth/2.0, networkHeight/2.0) ) 
-                .on("tick", render);
+    // var sim = d3.forceSimulation()
+    //             .nodes(nodes)
+    //             .force("links", d3.forceLink().links(links).distance(8) )
+    //             .force("repulse", d3.forceManyBody().strength(-15) )
+    //             .force("center", d3.forceCenter(networkWidth/2.0, networkHeight/2.0) ) 
+    //             .on("tick", render);
 
     function render() {
 
