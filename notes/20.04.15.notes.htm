@@ -142,7 +142,7 @@
                       .data(chords)
                       .join("path")
                         .attr("fill-opacity", 0.5)
-                        .attr("stroke", "none"))
+                        .attr("stroke", "none")
                         .attr("fill", d => colorScale( nodes[ d.source.index ].name ))
                         .attr("d", ribbonGen);
     
