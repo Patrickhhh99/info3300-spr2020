@@ -1,0 +1,237 @@
+<html><head>
+<title>INFO 3300 - April 17</title>
+
+  <link href="https://fonts.googleapis.com/css?family=Lato:400,700|Raleway:400,700" rel="stylesheet">
+
+  <link rel="stylesheet" type="text/css" href="../css/normalize.css">
+  <link rel="stylesheet" type="text/css" href="../css/skeleton.css">
+  <link rel="stylesheet" type="text/css" href="../css/custom-style.css">
+
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.14.2/styles/default.min.css">
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.14.2/highlight.min.js"></script>
+  <script src="https://d3js.org/d3.v5.min.js"></script>
+  <script src="https://d3js.org/d3-array.v2.min.js"></script>
+  <style>
+
+  line.dashed {
+    stroke: #aaa;
+    stroke-width: 1px;
+    stroke-dasharray: 2;
+  }
+  text.axis {
+    text-anchor: end;
+    font-variant: all-small-caps;
+  }
+
+
+  </style>
+</head>
+
+<body>
+  <div class="container larger">
+  <h3>Prompt for In Class April 17</h3>
+  <p>At the very start of class we'll critique this example: <a href="https://www.informationisbeautiful.net/visualizations/snake-oil-superfoods/">Snake Oil Superfoods</a> (thanks, Shea). <br/>&nbsp;</p>
+  <p> Today we'll continue working with the LotR dataset from the recorded lecture for 04-15. No need to have watched it ahead of time. </p>
+  <p><a href="https://observablehq.com/@d3/radial-dendrogram">Here</a> is an Observable example of a radial dendrogram. <a href="https://observablehq.com/@d3/hierarchical-edge-bundling">This</a> diagram uses edge bundling.</p>
+  <p>All of our main functions come from the <a href="https://github.com/d3/d3-hierarchy">d3 hierarchy library</a>. We'll also be making use of the radial link generator from <a href="https://github.com/d3/d3-shape">d3-shape</a>.</p>
+  
+  
+  
+  
+  
+  
+    
+  <h5>HTML for today:</h5>
+  
+  <svg id="force" height="600" width="600" style="background: #fff; margin-top:50px" >
+  </svg>
+  
+  <svg id="radial" height="600" width="600" style="background: #fff; margin-top:50px" >
+  </svg>
+    
+  <svg id="dendro" height="600" width="600" style="background: #fff; margin-top:50px" >
+  </svg>
+
+
+  <h5>Code for today:</h5>
+  <pre>
+    <code id="display1" class="hljs javascript">
+      <!--- autofilled --->
+    </code>
+  </pre>
+
+
+  <script id="notes1">
+  // Layer for drawing
+  const width = d3.select("#force").attr("width");
+  const height = d3.select("#force").attr("height");
+  
+  
+  
+  // Start with a force-directed chart of the nodes
+  
+  const forceChart = d3.select("#force").append("g");
+  const drawForce = async () => {
+  
+    // Load LotR dataset
+    const lotr = await d3.json("../datasets/lotr-cooccur.json");
+    console.log(lotr);
+    
+    let nodes = lotr.nodes;
+    let links = lotr.links;
+    let colorScale = d3.scaleOrdinal(d3.schemeCategory10);
+  
+    let filteredLinks = links.filter( d => d.cooccurrence > 0 );
+    
+    let widthScale = d3.scaleLinear().domain(d3.extent(filteredLinks, d => d.cooccurrence)).range([1,6])
+  
+  
+    // make factions into nodes and links
+    let facNodes = [];
+    let facToIndex = {};
+    let facEdgeDict = {};
+    nodes.forEach( d => {
+      if (!(d.faction in facToIndex)) {
+        facToIndex[d.faction] = facNodes.length;
+        facNodes.push({faction: d.faction});
+      }
+    });
+    filteredLinks.forEach( d => {
+      let mn = Math.min(facToIndex[nodes[d.source].faction], facToIndex[nodes[d.target].faction]);
+      let mx = Math.max(facToIndex[nodes[d.source].faction], facToIndex[nodes[d.target].faction]);
+      
+      if (!(mn in facEdgeDict)) {
+          facEdgeDict[mn] = {};
+      }
+      if (mx in facEdgeDict[mn]) {
+        facEdgeDict[mn][mx] = facEdgeDict[mn][mx] + 1;
+      }
+      else {
+        facEdgeDict[mn][mx] = 1;
+      }
+    });
+    let facLinks = [];
+    
+    for (let i=0; i<facNodes.length; i++) {
+        for (let j=i+1; j<facNodes.length; j++) {
+          if (i in facEdgeDict && j in facEdgeDict[i] && facEdgeDict[i][j] > 0) {
+            facLinks.push({source:i, target:j, cooccurrence:facEdgeDict[i][j]});
+          }
+        }
+    }
+    
+    console.log(facNodes)
+    console.log(facLinks);
+  
+  
+  
+    // Simulation for the characters
+    var sim = d3.forceSimulation()
+                .nodes(nodes)
+                .force("links", d3.forceLink()   
+                                        .links(filteredLinks) )
+                .force("repulse", d3.forceManyBody().strength(-100) )
+                .force("center", d3.forceCenter(width/2.0, height/2.0))
+                .on("tick", render);
+    
+    function render() {
+    
+      let lines = forceChart.selectAll("line.link").data(filteredLinks)
+           .join(
+             enter => {enter.append("line")
+                           .attr("class","link")
+                           .attr("stroke","#333") 
+                           .attr("stroke-width", d => widthScale(d.cooccurrence) )
+             }
+           )
+           .attr("x1", d => d.source.x).attr("x2", d => d.target.x)
+           .attr("y1", d => d.source.y).attr("y2", d => d.target.y);
+    
+      // Nodes
+      let circles = forceChart.selectAll("circle.node").data(nodes)
+             .join(
+                enter => {enter.append("circle")
+                               .attr("class","node")
+                               .attr("fill", d => colorScale(d.faction) )
+                               .attr("stroke", "#333")
+                               .attr("r", 6)
+                               .attr("cx", 0)
+                               .attr("cy", 0);
+                          }
+              )
+             .attr("transform", d => "translate("+d.x+","+d.y+")");
+    }
+    // done render
+    
+    
+    
+  }
+  drawForce();
+  
+  
+  
+  // Make a radial dendrogram!
+  
+  const radialChart = d3.select("#radial").append("g");
+  const drawRadial = async () => {
+
+    // Load LotR dataset
+    const lotr = await d3.json("../datasets/lotr-cooccur.json");
+    console.log(lotr);
+    
+    let nodes = lotr.nodes;
+    let links = lotr.links;
+    
+    // Make scale to space things around a circle
+    let circleScale = d3.scaleLinear().domain([0,nodes.length]).range([0,2*Math.PI]);
+    let radius = 220; // Points will be spaced in a constant radius around a center
+    
+    
+    
+    
+    
+    
+  }
+  drawRadial();
+  
+  
+  const dendroChart = d3.select("#dendro").append("g");
+  const drawDendro = async () => {
+
+    // Load LotR dataset
+    const lotr = await d3.json("../datasets/lotr-cooccur.json");
+    console.log(lotr);
+    
+    let nodes = lotr.nodes;
+    let links = lotr.links;
+    
+    // Make a hierarchy (tree) out of our data
+    
+    
+    
+  }
+  drawDendro();
+  
+  
+
+
+
+  </script>
+
+
+
+
+
+
+
+
+  <!--- calls the highlight library to fill the <pre> tag with code --->
+  <script>
+  document.getElementById("display1").innerText = document.getElementById("notes1").innerText;
+  hljs.initHighlightingOnLoad();
+  </script>
+
+
+  </div>
+</body>
+</html>
