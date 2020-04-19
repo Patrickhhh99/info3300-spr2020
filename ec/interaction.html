@@ -1,0 +1,163 @@
+<html><head>
+<title>INFO 3300 - Interaction Challenge</title>
+
+  <link href="https://fonts.googleapis.com/css?family=Lato:400,700|Raleway:400,700" rel="stylesheet">
+
+  <link rel="stylesheet" type="text/css" href="../css/normalize.css">
+  <link rel="stylesheet" type="text/css" href="../css/skeleton.css">
+  <link rel="stylesheet" type="text/css" href="../css/custom-style.css">
+
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.14.2/styles/default.min.css">
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.14.2/highlight.min.js"></script>
+  <script src="https://d3js.org/d3.v5.min.js"></script>
+  <script src="https://d3js.org/topojson.v2.min.js"></script>
+  <style>
+
+  </style>
+
+</head>
+<body>
+  <div class="container larger">
+  <h3>Interaction Challenge</h3>
+  <p>
+    You can choose between one of two different challenge problems this week:
+  </p>
+  <p>
+    1: Implement bubble cursor from the <a href="https://www.tovigrossman.com/BubbleCursor/">original academic paper</a> (see page 283 on the PDF). I've provided a scatterplot below (using the <a href="../datasets/gapminder.csv">Gapminder dataset</a>) for which you should provide bubble cursor mouseover interaction. See the lecture video/slides from today for an example of how it should behave. At the very least, users should be able to use a bubble cursor to highlight points, as indicated by a black stroke. Ideally, you also print a label for the point.
+  </p>
+
+  <p>
+    2: Make three useless widgets. Take a normal HTML <a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input">&lt;input&gt; element</a> and make it perform counter to user expectations. The expectations that users have about how interactive elements work are often abused in <a href="https://www.darkpatterns.org/">dark patterns</a> or as the result of plain bad design. We won't be so malicious for this challenge, but we will pretend to be incompetent designers. Make 3 different &lt;input&gt; elements that do something that runs counter to expectations or prevents them from functioning as expected. I've included some examples below. For each element that you make, please include a &lt;p&gt; tag explaining what you made and why it runs counter to user expectations or does not function as expected. Widgets that do not work at all will not be awarded credit.
+  </p>
+    
+  <p>
+    Submit your answer to CMS in the form of a .zip file containing your own HTML and a copy of the dataset. Submissions will be graded for completeness rather than quality, and the "best" ones will be highlighted in class. You must turn in your final version before 11:59PM on Friday, April 24 in order to receive credit. You do not need to do both challenges, and you will not receive more extra credit if you do so.
+  </p>
+  
+  <h4> Chart to use for Bubble Cursor:</h4>
+  <svg id="chart" width="600" height="400"></svg>
+  
+  <script>
+  // Script to generate this chart
+  
+  let svg = d3.select("svg#chart");
+  let width = svg.attr("width");
+  let height = svg.attr("height");
+  
+  const drawChart = async () => {
+    
+    let data = await d3.csv("../datasets/gapminder.csv");
+    console.log(data);
+    
+    // Pick a random 40 points just to make our life easier for bubble-ing
+    d3.shuffle(data); // shuffle in place
+    data = data.slice(0,40);
+    
+    data.forEach( (d, i) => {
+      d['life'] = Number(d['Life Expectancy']);
+      d['gdp'] = Number(d['GDP/Person (PPP$)']);
+      // d['Total Population'] = Number(d['Total Population']); // This will pump out NaNs. Why?
+      d['pop'] = Number(d['Total Population'].replace(/,/g,"")); // Fix with replace for commas
+    });
+    
+    // See stuff below 5
+    data = data.filter( (d) => {return d['gdp'] != 0 && d['life'] != 0 && d['pop'] != 0;}  );
+    console.log(data)
+
+
+    const gdpScale = d3.scaleSymlog().domain(d3.extent(data, d => d.gdp)).range([10, width-10]);
+    const lifeScale = d3.scaleLinear().domain(d3.extent(data, d => d.life)).range([height-10, 10]);
+    const popScale = d3.scaleSymlog().domain(d3.extent(data, d => d.pop)).range([5,10]);
+    const regScale = d3.scaleOrdinal(d3.schemeCategory10);
+    
+    svg.selectAll("circle.point").data(data)
+       .join("circle").attr("class","point")
+           .attr("cx", d => gdpScale(d['gdp']))
+           .attr("cy", d => lifeScale(d['life']))
+           .attr("r", d => popScale(d['pop']))
+           .attr("opacity", 0.8)
+           .style("fill", d => regScale(d.Region));
+  
+    
+    
+    
+  }
+  drawChart();
+  
+  
+  </script>
+  
+  
+  
+  <h4> Some example "malicious" widgets:</h4>
+  <p>
+    <input id="rng" type="range" name="slider" min="0" max="100" value="50" step="1" style="width:200px;"><br/>
+    Please select 60 using this slider. You have currently selected <span id="sel" style="color:crimson;">50</span>
+  </p>
+  <p style="margin-top:40px;">
+    Please uncheck the hobbies that you don't do
+    <div id="boxes">
+      <div><input type="checkbox" class="chk" id="h1" name="h1" checked> <label style="display:inline;" for="h1">Speed Basket-weaving</label></div>
+      <div><input type="checkbox" class="chk" id="h2" name="h2" checked> <label style="display:inline;" for="h2">Combat Philately</label></div>
+      <div><input type="checkbox" class="chk" id="h3" name="h3" checked> <label style="display:inline;" for="h3">Aerial Numismatics</label></div>
+      <div><input type="checkbox" class="chk" id="h4" name="h4" checked> <label style="display:inline;" for="h4">Drive-by Acapella</label></div>
+      <div><input type="checkbox" class="chk" id="h5" name="h5" checked> <label style="display:inline;" for="h5">Amateur Somnology</label></div>
+    </div>
+  </p>
+  
+  <script>
+  // Slider
+  var w = 200;
+  d3.select("#rng").on("input", function() {
+    
+    let sld = d3.select(this);
+    d3.select("#sel").text(sld.property("value"));
+    
+    w = w + 10;
+    console.log(w)
+    sld.style("width", w+"px");
+    
+    
+  })
+  
+  // Checkboxes
+  
+  function shuffle() {
+    // Helper function care of: https://stackoverflow.com/questions/315177/any-way-to-shuffle-content-in-multiple-div-elements
+    var parent = document.getElementById("boxes");
+    var divs = parent.children;
+    var frag = document.createDocumentFragment();
+    while (divs.length) {
+        frag.appendChild(divs[Math.floor(Math.random() * divs.length)]);
+    }
+  parent.appendChild(frag);  
+  }
+  var i = 5;
+  
+  d3.selectAll(".chk").on("input", function() {
+    
+    let th = d3.select(this);
+    if (!th.property("checked")) {
+      d3.selectAll(".chk").property("checked", true);
+      th.property("checked", false);
+      shuffle();
+    }
+    
+  })
+  
+  
+  
+  </script>
+
+
+  </div>
+  
+  
+  
+  
+  
+  
+  
+  
+</body>
+</html>

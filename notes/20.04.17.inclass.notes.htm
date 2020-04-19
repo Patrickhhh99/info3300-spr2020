@@ -32,8 +32,6 @@
   <h3>Prompt for In Class April 17</h3>
   <p>At the very start of class we'll critique this example: <a href="https://www.informationisbeautiful.net/visualizations/snake-oil-superfoods/">Snake Oil Superfoods</a> (thanks, Shea). <br/>&nbsp;</p>
   <p> Today we'll continue working with the LotR dataset from the recorded lecture for 04-15. No need to have watched it ahead of time. </p>
-  <p><a href="https://observablehq.com/@d3/radial-dendrogram">Here</a> is an Observable example of a radial dendrogram. <a href="https://observablehq.com/@d3/hierarchical-edge-bundling">This</a> diagram uses edge bundling.</p>
-  <p>All of our main functions come from the <a href="https://github.com/d3/d3-hierarchy">d3 hierarchy library</a>. We'll also be making use of the radial link generator from <a href="https://github.com/d3/d3-shape">d3-shape</a>.</p>
   
   
   
@@ -45,13 +43,6 @@
   
   <svg id="force" height="600" width="600" style="background: #fff; margin-top:50px" >
   </svg>
-  
-  <svg id="radial" height="600" width="600" style="background: #fff; margin-top:50px" >
-  </svg>
-    
-  <svg id="dendro" height="600" width="600" style="background: #fff; margin-top:50px" >
-  </svg>
-
 
   <h5>Code for today:</h5>
   <pre>
@@ -70,6 +61,7 @@
   
   // Start with a force-directed chart of the nodes
   
+  
   const forceChart = d3.select("#force").append("g");
   const drawForce = async () => {
   
@@ -81,7 +73,7 @@
     let links = lotr.links;
     let colorScale = d3.scaleOrdinal(d3.schemeCategory10);
   
-    let filteredLinks = links.filter( d => d.cooccurrence > 0 );
+    let filteredLinks = links.filter( d => d.cooccurrence > 15 );
     
     let widthScale = d3.scaleLinear().domain(d3.extent(filteredLinks, d => d.cooccurrence)).range([1,6])
   
@@ -123,15 +115,46 @@
     console.log(facNodes)
     console.log(facLinks);
   
-  
-  
+    var factionSim = d3.forceSimulation()
+                .nodes(facNodes)
+                .force("links", d3.forceLink()   
+                                        .links(facLinks)
+                                         .distance(400) )
+                .force("repulse", d3.forceManyBody().strength(-400) )
+                .force("center", d3.forceCenter(width/2.0, height/2.0))
+                .stop();
+    for (let i=0; i<100; i++) {
+      factionSim.tick();
+    }
+    
+    // // Code to draw the faction graph
+    // let lines = forceChart.selectAll("line.factlink").data(facLinks)
+    //        .join("line")
+    //        .attr("class","factlink")
+    //        .attr("stroke","#333")
+    //        .attr("x1", d => d.source.x).attr("x2", d => d.target.x)
+    //        .attr("y1", d => d.source.y).attr("y2", d => d.target.y);
+    // 
+    // let circles = forceChart.selectAll("circle.factnode").data(facNodes)
+    //        .join("circle")
+    //        .attr("class","factnode")
+    //        .attr("fill", d => colorScale(d.faction) )
+    //        .attr("r", 6)
+    //        .attr("cx", d => d.x)
+    //        .attr("cy", d => d.y);
+    
+    factionSim = null;
+    
+    
     // Simulation for the characters
     var sim = d3.forceSimulation()
                 .nodes(nodes)
                 .force("links", d3.forceLink()   
                                         .links(filteredLinks) )
                 .force("repulse", d3.forceManyBody().strength(-100) )
-                .force("center", d3.forceCenter(width/2.0, height/2.0))
+                //.force("center", d3.forceCenter(width/2.0, height/2.0))
+                .force("x", d3.forceX().x( d => facNodes[facToIndex[d.faction]].x ).strength(0.2) )
+                .force("y", d3.forceY().y( d => facNodes[facToIndex[d.faction]].y ).strength(0.2) )
                 .on("tick", render);
     
     function render() {
@@ -167,52 +190,6 @@
     
   }
   drawForce();
-  
-  
-  
-  // Make a radial dendrogram!
-  
-  const radialChart = d3.select("#radial").append("g");
-  const drawRadial = async () => {
-
-    // Load LotR dataset
-    const lotr = await d3.json("../datasets/lotr-cooccur.json");
-    console.log(lotr);
-    
-    let nodes = lotr.nodes;
-    let links = lotr.links;
-    
-    // Make scale to space things around a circle
-    let circleScale = d3.scaleLinear().domain([0,nodes.length]).range([0,2*Math.PI]);
-    let radius = 220; // Points will be spaced in a constant radius around a center
-    
-    
-    
-    
-    
-    
-  }
-  drawRadial();
-  
-  
-  const dendroChart = d3.select("#dendro").append("g");
-  const drawDendro = async () => {
-
-    // Load LotR dataset
-    const lotr = await d3.json("../datasets/lotr-cooccur.json");
-    console.log(lotr);
-    
-    let nodes = lotr.nodes;
-    let links = lotr.links;
-    
-    // Make a hierarchy (tree) out of our data
-    
-    
-    
-  }
-  drawDendro();
-  
-  
 
 
 
