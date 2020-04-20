@@ -1,0 +1,128 @@
+<html><head>
+<title>INFO 3300 - April 20</title>
+
+  <link href="https://fonts.googleapis.com/css?family=Lato:400,700|Raleway:400,700" rel="stylesheet">
+
+  <link rel="stylesheet" type="text/css" href="../css/normalize.css">
+  <link rel="stylesheet" type="text/css" href="../css/skeleton.css">
+  <link rel="stylesheet" type="text/css" href="../css/custom-style.css">
+
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.14.2/styles/default.min.css">
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.14.2/highlight.min.js"></script>
+  <script src="https://d3js.org/d3.v5.min.js"></script>
+  <script src="https://d3js.org/d3-array.v2.min.js"></script>
+  <style>
+  </style>
+</head>
+
+<body>
+  <div class="container larger">
+  <h3>Prompt for In Class April 20</h3>
+  
+  <p>At the very start of class we'll critique this example: <a href="http://bl.ocks.org/darrenjaworski/raw/5544599/">Animated College Costs</a>. Pay attention to how they designed the animations and what specific choices they have made that either aid or harm your understanding of the trend over time. Then, think about alternative ways to convey the same insights. <br/>&nbsp;</p>
+  <p>For the main part of today's class, I'd like to do some ideating about interactions. Below you'll see a chart of Gapminder world demographic data which we used in some of our earlier scatterplot lectures. This time I've included the full Gapminder dataset as an import. Check your console to see both the full set and then the subset of 2010 data that I extracted using data.filter().</p>
+  <p>In small groups, first try to list all of the different kinds of interactions you could add to this chart. For each interaction, come up with a justification explaining why the interaction would help a user accomplish a specific task or why it might reveal a new insight. Begin by focusing on how you can provide users more information about the marks and channels already displayed onscreen. Then, look at the raw dataset and come up with new interactions that help users explore the data in new ways or see attributes of data not currently represented in the chart.</p>
+  <p>We'll reconvene and try to exhaustively list all of the different kinds of interactions that teams have identified. Finally, we'll chat through some of the salient design trade-offs and issues associated with the different interactions.</p>
+  
+  
+  
+  
+  
+  
+    
+  <h5>Chart for today:</h5>
+  
+  <svg id="chart" width="680" height="680"></svg>
+  
+
+
+  <h5>Code for today:</h5>
+  <pre>
+    <code id="display1" class="hljs javascript">
+      <!--- autofilled --->
+    </code>
+  </pre>
+
+
+  <script id="notes1">
+  // Script to generate this chart
+  
+  let svg = d3.select("svg#chart");
+  let width = svg.attr("width");
+  let height = svg.attr("height");
+  let margins = {top:20, bottom:60, left:60, right:20}
+  let chartWidth = width-margins.left-margins.right;
+  let chartHeight = height-margins.top-margins.bottom;
+  let chartArea = svg.append("g")
+                      .attr("id","area")
+                      .attr("transform","translate("+margins.left+","+margins.top+")");
+  
+  const drawChart = async () => {
+    
+    let data = await d3.csv("../datasets/gapminder.full.csv", d3.autoType);
+    console.log("Entire dataset:");
+    console.log(data);
+    
+    // Select only the 2010 dates -- can we show more somehow?
+    data = data.filter( d => d.date === 2010 && 
+                             d['Total Population'] !== null && 
+                             d['GDP/Person (PPP$)'] !== null && 
+                             d['Life Expectancy (y)'] !== null);
+    
+    data.forEach( (d, i) => {
+      d.life = d['Life Expectancy (y)'];
+      d.gdp = d['GDP/Person (PPP$)'];
+      d.pop = Number(String(d['Total Population']).replace(/,/g,""));
+    });
+    console.log("Filtered dataset for current chart:");
+    console.log(data);
+
+
+    const gdpScale = d3.scaleLog().domain(d3.extent(data, d => d.gdp)).range([0, chartWidth]);
+    const lifeScale = d3.scaleLinear().domain(d3.extent(data, d => d.life)).range([chartHeight, 0]);
+    const popScale = d3.scaleSymlog().domain(d3.extent(data, d => d.pop)).range([5,10]);
+    const regScale = d3.scaleOrdinal(d3.schemeCategory10);
+    
+    svg.append("g").attr("class","y axis")
+                   .attr("transform","translate("+(margins.left-12)+","+margins.top+")")
+                   .call( d3.axisLeft(lifeScale) );
+                   
+    svg.append("g").attr("class","x axis")
+                   .attr("transform","translate("+margins.left+","+(margins.top+chartHeight+12)+")")
+                   .call( d3.axisBottom(gdpScale)
+                            .ticks(3, "~s")
+                        );               
+    
+    chartArea.selectAll("circle.point").data(data)
+             .join("circle").attr("class","point")
+             .attr("cx", d => gdpScale(d['gdp']))
+             .attr("cy", d => lifeScale(d['life']))
+             .attr("r", d => popScale(d['pop']))
+             .attr("opacity", 0.8)
+             .style("fill", d => regScale(d.Region));
+  
+    
+    
+    
+  }
+  drawChart();
+  
+  </script>
+
+
+
+
+
+
+
+
+  <!--- calls the highlight library to fill the <pre> tag with code --->
+  <script>
+  document.getElementById("display1").innerText = document.getElementById("notes1").innerText;
+  hljs.initHighlightingOnLoad();
+  </script>
+
+
+  </div>
+</body>
+</html>
