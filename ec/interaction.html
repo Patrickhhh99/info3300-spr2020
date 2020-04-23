@@ -31,7 +31,7 @@
   </p>
     
   <p>
-    Submit your answer to CMS in the form of a .zip file containing your own HTML and a copy of the dataset. Submissions will be graded for completeness rather than quality, and the "best" ones will be highlighted in class. You must turn in your final version before 11:59PM on Friday, April 24 in order to receive credit. You do not need to do both challenges, and you will not receive more extra credit if you do so.
+    Submit your answer to CMS in the form of a .zip file containing your own HTML and a copy of the dataset. Submissions will be graded for completeness rather than quality, and the "best" ones will be highlighted in class. You must turn in your final version before 11:59PM on Monday, April 27 in order to receive credit. You do not need to do both challenges, and you will not receive more extra credit if you do so.
   </p>
   
   <h4> Chart to use for Bubble Cursor:</h4>
@@ -56,8 +56,7 @@
     data.forEach( (d, i) => {
       d['life'] = Number(d['Life Expectancy']);
       d['gdp'] = Number(d['GDP/Person (PPP$)']);
-      // d['Total Population'] = Number(d['Total Population']); // This will pump out NaNs. Why?
-      d['pop'] = Number(d['Total Population'].replace(/,/g,"")); // Fix with replace for commas
+      d['pop'] = Number(d['Total Population'].replace(/,/g,""));
     });
     
     // See stuff below 5

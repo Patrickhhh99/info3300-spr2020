@@ -163,8 +163,9 @@
     });
     d3.select("#rand").on("click", () => {
       // Randomize positions and restart the simulation
-        passengerSimulation.restart(); // reset the "alpha"
+        passengerSimulation.restart(); 
         passengerSimulation.stop(); // then stop sim so we can reposition without issue
+        passengerSimulation.alpha(1);
         passengers.forEach( d => {
           d.x = d3.randomUniform(10,allWidth-10)();
           d.y = d3.randomUniform(10,allHeight-10)();
