@@ -44,7 +44,7 @@ with open('pgh_homes.json') as f:
 # The intuition here is that we don't want to waste bandwidth sending fields the client may not need at the start, like Description
 # Houses will enable filtering through URL query parameters (https://skorks.com/2010/05/what-every-developer-should-know-about-urls/)
 
-outputKeys = ['HouseID','Neighborhood','Latitude','Longitude','Sale Price','Bathrooms','Bedrooms']
+outputKeys = ['HouseID','Neighborhood','Latitude','Longitude','Sale Price','Bathrooms','Bedrooms','Lot Size']
 @app.route('/houses')
 def houses():
     
