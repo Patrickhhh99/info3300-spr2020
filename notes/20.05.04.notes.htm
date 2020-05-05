@@ -1,0 +1,436 @@
+<html><head>
+<title>INFO 3300 - May 4</title>
+
+  <link href="https://fonts.googleapis.com/css?family=Lato:400,700|Raleway:400,700" rel="stylesheet">
+
+  <link rel="stylesheet" type="text/css" href="../css/normalize.css">
+  <link rel="stylesheet" type="text/css" href="../css/skeleton.css">
+  <link rel="stylesheet" type="text/css" href="../css/custom-style.css">
+
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.14.2/styles/default.min.css">
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.14.2/highlight.min.js"></script>
+  <script src="https://d3js.org/d3.v5.min.js"></script>
+  <style>
+
+
+  </style>
+</head>
+
+<body>
+  <div class="container larger">
+  <h3>Notes for May 4</h3>
+  <p>Today we'll look at raster graphics and vector graphics. <a href="https://designshack.net/articles/layouts/vector-vs-raster-what-do-i-use/">Here</a> is a small guide.</p>
+  <p>Here are a few articles talking about SVG versus Canvas and choosing between them: <a href="https://www.sitepoint.com/canvas-vs-svg-choosing-the-right-tool-for-the-job/">1</a>, <a href="https://medium.com/@benisinca/svg-vs-canvas-92938aff799a">2</a>, <a href="https://smus.com/canvas-vs-svg-performance/">3 (older)</a> </p>
+  <p>In addition to Canvas and SVG, there is also WebGL which has a few extra capabilities which are very handy. You can make use of fragment shaders for visual effects (and even <a href="http://glslsandbox.com/e#207.3">GPU computation</a>).
+  <p>You can <a href="http://bl.ocks.org/mbostock/5914438">mix the raster and vector together</a> with enough work!</p>
+  <p>Also, there are lots of helper libraries, including <a href="https://github.com/quantmind/d3-canvas-transition">this one</a> which enables .transition() on Canvas.</p>
+  <h5>HTML for today:</h5>
+
+
+
+
+
+
+  <p> Canvas Chart </p>
+  
+  <div id="container" style="width: 800px; height: 500px;" >
+  </div>
+
+
+
+  <p> Conway Simulation </p>
+  
+  <canvas width="500" height="500" id="game"></canvas>
+  <div id="fpsCounter">FPS</div>
+  <div id="configPanel">
+  <button id="start">Start</button>
+  <button id="stop">Stop</button>
+  <button id="randomize">Randomize</button>
+  </div>
+    
+  <h5>Code for today:</h5>
+  <pre>
+    <code id="display1" class="hljs javascript">
+      <!--- autofilled --->
+    </code>
+  </pre>
+  <pre>
+    <code id="display2" class="hljs javascript">
+      <!--- autofilled --->
+    </code>
+  </pre>
+
+
+  <script id="notes1">
+
+  
+  // Container that will hold the canvas and SVG overlay
+  const container = d3.select("#container").style("position","relative");
+  const width = Number(container.style("width").replace("px",""));
+  const height = Number(container.style("height").replace("px",""));
+  const margin = { top: 10, right: 10, bottom: 50, left:50};
+  const chartWidth = width - margin.left - margin.right;
+  const chartHeight = height - margin.top - margin.bottom;
+  
+  // Add a canvas element
+  const canvas = container.append("canvas")
+                          .attr("width",chartWidth)
+                          .attr("height",chartHeight)
+                          .style("position","absolute")
+                          .style("top",margin.top + 'px')
+                          .style("left",margin.left + 'px');
+  
+  
+  // Layer SVG on top of the canvas so we can draw axes and make the canvas interactive      
+  const svg = container.append("svg")
+                       .attr("width", width)
+                       .attr("height", height)
+                       .style("position","absolute")
+                       .style("top", 0)
+                       .style("left", 0);               
+  const yAxisArea = svg.append("g").attr("transform","translate("+(margin.left-2)+","+margin.top+")");
+  const xAxisArea = svg.append("g").attr("transform","translate("+margin.left+","+(chartHeight+2+margin.top)+")");
+  const label = svg.append("text").attr("x", margin.left+10).attr("y", margin.top+10);
+  
+  
+  // Add our interactive area, which is just a transparent rect
+  const interactiveArea = svg.append("g").attr("transform","translate("+margin.left+","+margin.top+")");
+  interactiveArea.append("rect")
+                 .attr("width",chartWidth)
+                 .attr("height",chartHeight)
+                 .attr("x",0)
+                 .attr("y",0)
+                 .attr("opacity",0);         
+                
+                                   
+                 
+  const drawPlot = async () => {
+   
+    let data = await d3.csv("../datasets/board-games-simplified.csv");
+
+    const parseTime = d3.timeParse("%Y");
+    data.forEach( (d, i) => {
+      d['year_published'] = parseTime(d['year_published']);
+      d['average_rating'] = Number(d['average_rating']);
+      d['playing_time'] = Number(d['playing_time']);
+    });
+
+    const xScale = d3.scaleTime().domain(d3.extent(data, d => d['year_published'])).range([10, chartWidth-10]);
+    const yScale = d3.scaleLinear().domain(d3.extent(data, d => d['average_rating'])).range([chartHeight-10, 10]);
+    const logScale = d3.scaleLog().domain(d3.extent(data, d => d['playing_time'])).range([0, 1]);
+    const colorScale =  d3.scaleSequential( d => d3.interpolatePurples(logScale(d)) );
+
+    let yAxis = d3.axisLeft(yScale); 
+    yAxisArea.append("g").attr("class", "y axis").call(yAxis);
+
+    let xAxis = d3.axisBottom(xScale); 
+    xAxisArea.append("g").attr("class", "x axis").call(xAxis);
+
+
+    // Make an array to store indices
+    // We'll need this later in order to be able to add interactivity
+    indexMatrix = []
+    for (let i=0; i<height; i++) {
+      row = [];
+      for (let j=0; j<width; j++) {
+        row.push(-1);
+      }
+      indexMatrix.push(row);
+    }    
+
+
+    // Get the "drawing context" for the canvas
+    // This is the tool we use to modify the contents of the canvas -- think of it like a paintbrush
+    const context = canvas.node().getContext('2d');
+    context.clearRect(0, 0, width, height);
+    context.globalAlpha = 0.6;
+    data.forEach( (d,i) => {
+      let x = xScale(d['year_published']);
+      let y = yScale(d['average_rating']);
+      let rad = 3;
+      let color = colorScale(d['playing_time']);
+
+      context.fillStyle = color;
+      context.beginPath();
+      context.arc(x, y, rad, 0, 2*Math.PI);
+      context.fill();
+
+      // Store the indices to make the canvas interactive -- yay trigonometry
+      let radSq = rad * rad;
+      for (let mx=x-rad; mx<=x+rad; mx++) {
+        for (let my=y-rad; my<=y+rad; my++) {
+          distance = ((x - mx) * (x - mx)) + ((y - my) * (y - my));
+          if (distance <= radSq) {
+              indexMatrix[parseInt(my)][parseInt(mx)] = i;
+          }
+       }
+     }
+     
+    });
+
+    // Add interactivity - we have to do all of this manually so it takes much more work
+    let currentTarget = -1;
+    interactiveArea.on("mousemove", function() {
+
+      let loc = d3.mouse(this);
+      console.log(loc);
+      let index = indexMatrix[ parseInt(loc[1]) ][ parseInt(loc[0]) ];
+      console.log(index);
+
+      if (index > 0) {
+         // Make our "mouseover" function
+         if (index != currentTarget) {
+           currentTarget = index;
+           mouseExited();
+           mouseEntered(index);
+         }
+      }
+      // Make our "mouseout" function
+      else {
+        currentTarget = -1;
+        mouseExited();
+  }
+    });
+    // Also trigger "mouseout" when leaving interactive area
+    interactiveArea.on("mouseout", () => { mouseExited(); })
+
+
+    function mouseEntered(i) {
+      let d = data[i];
+      interactiveArea.append("circle")
+                    .attr("id","highlight")
+                    .attr("cx",xScale(d['year_published']))
+                    .attr("cy",yScale(d['average_rating']))
+                    .attr("r",5)
+                    .attr("stroke","black")
+                    .attr("fill","none");
+      label.text(d['name']);
+                    
+    }
+    function mouseExited() {
+      d3.select("#highlight").remove();
+      label.text("");
+    }
+
+
+
+  }
+  drawPlot();
+
+  </script>
+
+  
+  
+  
+  <script id="notes2">
+  
+    
+  // Container that will hold the canvas and SVG overlay
+  const gameCanvas = d3.select("#game");
+  const gameWidth = gameCanvas.attr("width");
+  const gameHeight = gameCanvas.attr("height");
+  
+  // Code for Conway's Game of Life
+  // https://www.conwaylife.com/wiki/Conway%27s_Game_of_Life
+  
+  // Returns a random board
+  function randomize(lifeProbability) {
+    let board = []
+    for (let i=0; i<gameHeight; i++) {
+      row = [];
+      for (let j=0; j<gameWidth; j++) {
+        if (Math.random() < lifeProbability) { row.push(1); }
+        else { row.push(0); }
+      }
+      board.push(row);
+    }
+    return board;   
+  }        
+  
+  // To step the simulation, we need a temporary buffer -- here we just make a second array
+  // You could do some clever things and use the canvas as a cache (or run it entirely in canvases with another canvas stored in RAM)
+  var nextBoard = [];
+  for (let i=0; i<gameHeight; i++) {
+    row = [];
+    for (let j=0; j<gameWidth; j++) {
+      row.push( 0 );
+    }
+    nextBoard.push(row);
+  }
+  // Creates the next "step" and then pastes it to board
+  function step(board) {
+    for (let y=0; y<gameHeight; y++) {
+      for (let x=0; x<gameWidth; x++) {
+        // init
+        let state = board[y][x];
+        let sum = -state; // to simplify the loops we include the middle cell, so we remove it during init
+        
+        for (let my=Math.max(0,y-1); my<=Math.min(y+1,gameHeight-1); my++) {
+          for (let mx=Math.max(0,x-1); mx<=Math.min(x+1,gameWidth-1); mx++) {
+            sum = sum + board[my][mx];
+          }
+        }
+        let newState = 0;
+        if (state) { // Rule 1, 2, 3
+          if (sum === 2 || sum === 3) { newState = 1; }
+        }
+        else { // Rule 4
+          if (sum === 3) { newState = 1; }
+        }
+        nextBoard[y][x] = newState;
+      }
+    }
+    
+    // Paste changes back to original board
+    for (let i=0; i<gameHeight; i++) {
+      for (let j=0; j<gameWidth; j++) {
+        board[i][j] = nextBoard[i][j];
+      }
+    }
+      
+  }        
+  // End Game of Life code    
+  
+  
+  
+  
+  
+  // LECTURE CODE HERE
+  
+  
+  
+  
+  
+  
+  // Configure the simulation
+  let board = randomize(0.3);        
+  var timer;          // placeholder for d3.timer instance
+  
+  // Stop simulation
+  function killSimulation() {
+    if (timer) {
+      timer.stop();
+    }
+    
+    
+  }
+  // Start simulation back up
+  function startSimulation() {
+    
+    killSimulation();
+    
+    // Use d3.timer() for our animation
+    timer = d3.timer(function() {
+      
+      step(board);
+      draw();
+      
+
+    });
+    
+    
+  }
+  // Randomize sim state
+  function randomizeSimulation() {
+    killSimulation();
+    board = randomize(0.3);
+    draw();
+  }
+  
+  
+  // Get a drawing context as before
+  const ctx = gameCanvas.node().getContext('2d');
+  
+  // This time we are going to manipulate the data manually using an array
+  // Start by getting a properly formatted data array for the canvas using getImageData
+  var imageData = ctx.getImageData(0, 0, gameWidth, gameHeight);
+  console.log(imageData);
+  
+  // This is the array we will modify -- note that this is not connected to the canvas, we will have to paste later on
+  var pixels = imageData.data;
+  console.log(pixels);
+  
+  // Our draw function triggered whenever the game updates
+  function draw() {
+    
+    // default color will be white background
+    let liveColor = d3.rgb("steelblue");
+    
+    for (let y = 0; y < gameHeight; y++) {
+      for (let x = 0; x < gameWidth; x++) {
+        let state = board[y][x];
+        
+        let r = 255;
+        let g = 255;
+        let b = 255;
+        if (state) {
+          r = liveColor.r;
+          g = liveColor.g;
+          b = liveColor.b;
+        }
+        
+        // If you've got a hexadecimal color, e.g. #00CC00, then you can use this code to get RGB:
+        // var num = parseInt("#00CC00".replace('#',''), 16);
+        // var r = (num >> 16) & 255;
+        // var g = (num >> 8) & 255;
+        // var b = num & 255;
+        
+      
+        // The grid uses y and x, but the pixels array is flat, like [R1,G1,B1,A1, R2,G2,B2,A2, R3...]
+        // This means we need to convert y and x to the proper place in the pixels array
+        // To do this, we use 4 * locationInPixelArray since each "pixel" is 4 elements long
+        // locationInPixelArray is y * width + x -- i.e. each increase in Y means we have to skip a whole row's WIDTH worth of pixels
+        //                                               and then we shift a little bit further WITHIN the row using X
+  
+        // pixels[locationInPixelArray + offsetForRGBA] = R,G,B,A color value as an int
+        // red
+        pixels[4*(y*gameWidth + x) + 0] = r;
+        // green
+        pixels[4*(y*gameWidth + x) + 1] = g;
+        // blue
+        pixels[4*(y*gameWidth + x) + 2] = b;
+        // alpha
+        pixels[4*(y*gameWidth + x) + 3] = 255; // we want fully opaque cells
+  
+      }
+    }
+    // Finally, "paste" the data back into the canvas
+    ctx.putImageData(imageData, 0, 0);
+  }
+  
+  draw();
+  
+  
+  
+  // Button handlers for interactive environment
+  d3.select("#start").on("click", function() {
+    startSimulation();
+  });
+  d3.select("#stop").on("click", function() {
+    killSimulation();
+  });
+  d3.select("#randomize").on("click", function() {
+    randomizeSimulation();
+  });
+  
+  
+  
+  
+  </script>
+
+
+
+
+
+
+  <!--- calls the highlight library to fill the <pre> tag with code --->
+  <script>
+  document.getElementById("display1").innerText = document.getElementById("notes1").innerText;
+  document.getElementById("display2").innerText = document.getElementById("notes2").innerText;
+  hljs.initHighlightingOnLoad();
+  </script>
+
+
+  </div>
+</body>
+</html>

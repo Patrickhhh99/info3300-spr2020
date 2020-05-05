@@ -1,0 +1,84 @@
+<html><head>
+<title>INFO 3300 - Movie Barcode Challenge</title>
+
+  <link href="https://fonts.googleapis.com/css?family=Lato:400,700|Raleway:400,700" rel="stylesheet">
+
+  <link rel="stylesheet" type="text/css" href="../css/normalize.css">
+  <link rel="stylesheet" type="text/css" href="../css/skeleton.css">
+  <link rel="stylesheet" type="text/css" href="../css/custom-style.css">
+
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.14.2/styles/default.min.css">
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.14.2/highlight.min.js"></script>
+  <script src="https://d3js.org/d3.v5.min.js"></script>
+  <style>
+    h4 { margin-top: 50px; }
+  </style>
+  
+  
+</head>
+<body>
+  <div class="container larger">
+  <h3>Movie Barcode Challenge</h3>
+  <p>
+    Your challenge this week is to use HTML &lt;canvas&gt; elements to create visual "barcodes" for different films. This has been a popular subject of online <a href="https://moviebarcode.tumblr.com/">visualization blogs</a>. Some folks have even made <a href="https://zerowidthjoiner.net/movie-barcode-generator">publicly available tools</a> for generating them. For this challenge you'll be using a simplified dataset. Unlike MovieBarCodeGenerator.exe (where it samples colors from each row of frames sampled from the movie), your dataset contains one average color sample for each of 400 frames sampled evenly from a movie. Here is an example of what these data look like:
+    <img src=""/>
+  </p>
+  <p>
+    The dataset, accessible <a href="./barcodes.json">here</a>, contains a list of objects. Each object has some metadata about the movie, and then a property, frames, which contains a list of 400 individual movie frames. Each of those frame objects has a number of average color values computed using different techniques (e.g. convert colors to LAB, average them, then back to RGB; just average in RGB; use k-means clustering and pick the most dominant cluster color). You can choose to use any of the averages you think works best for this challenge -- <b>just be consistent</b>! <br/>
+    I have generated this dataset using a eclectic set of different films. As I have some concerns about potential fair use issues outside of the academic context, I'm not making this code available (I'm happy to discuss it in a meeting if you're curious).
+  </p>
+  <p>
+    To complete this challenge, you must modify this file in the following ways:
+  </p>
+  <ul>
+    <li>Use a d3 data join to add one &lt;div&gt; element to the #container &lt;div&gt; provided in this file.</li>
+    <li>Use append to add a &lt;h5&gt; or &lt;p&gt; tag within each of those divs indicating the title of the film.</li>
+    <li>In another append, add a &lt;canvas&gt; element within each of those divs. Each canvas element should be <b>800 pixels wide</b> and <b>100 pixels tall</b>. <br/> (Hint: assign your divs to a variable, then call variable.append() in two separate chains)</li>
+    <li>Using .each(), fill each canvas with an appropriate movie barcode following the instructions below. <br/> (Hint: divs.selectAll("canvas").each( function(d) { let cnvs = d3.select(this); d.frames.forEach( frame => {} ); }) )</li>
+    <li>As the canvas is 800px wide, each frame of the movie corresponds to two pixels of width. To fill each canvas, you have two options. First, you could draw a 2px wide line for each of the frames, slowly moving down the canvas. Second, you could use getImageData to get an array for the canvas and manually fill its RGB values as you iterate through the frames, pasting the data back in once you are done. I suggest you take the second approach following the pattern demoed in class for the Game of Life.</li>
+    <li>If you have constructed these two loops correctly, you should have a whole series of barcodes when you are finished</li>
+  </ul>
+  <p>
+    Submit your answer to CMS in the form of a .zip file containing your own version of this page's HTML as well as the dataset, barcodes.json. Submissions will be graded for completeness in meeting the given criteria rather than quality or choice of averaging technique. You must meet all criteria in order to receive credit. You must turn in your final version before 11:59PM on Tuesday, May 12 in order to receive credit.
+  </p>
+  
+  
+  <!--- USE D3 TO FILL UP THIS CONTAINER --->
+  <div id="container">
+  </div>
+  
+  
+  <script>
+  
+  
+  
+  const drawBarcodes = async () => {
+    
+    const data = await d3.json("./barcodes.json");
+    
+    let container = d3.select("#container");
+    
+    // YOUR JS CODE GOES HERE  
+    
+    
+    
+    
+    
+  
+  }
+  drawBarcodes();
+  
+  
+  </script>
+
+  </div>
+  
+  
+  
+  
+  
+  
+  
+  
+</body>
+</html>
